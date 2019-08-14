@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.dhu.mapper.JobMapper">
+    <select id="queryall" resultType="com.dhu.pojo.Job">
+        SELECT jobname,companyname,education,money,need,id from job limit #{pos},20
+    </select>
+
+    <select id="querybytitle" resultType="com.dhu.pojo.Job">
+        SELECT jobname,companyname,education,money,need,id from job
+          where need like concat('%',#{title},'%')
+          or rule like concat('%',#{title},'%')
+          limit #{pos},20
+    </select>
+
+    <select id="selectbyid" resultType="com.dhu.pojo.Job">
+        SELECT * from job where id = #{id}
+    </select>
+
+    <select id="allarea" resultType="com.dhu.pojo.Job">
+        select area from job;
+    </select>
+
+    <select id="allindustry" resultType="com.dhu.pojo.Job">
+        select industry,companyname from job;
+    </select>
+
+    <select id="add_id_of_categoryid" resultType="com.dhu.pojo.Job">
+        select id from job where categoryId = #{id}
+    </select>
+
+
+    <select id="alledu" resultType="com.dhu.pojo.Job">
+        select education from job;
+    </select>
+
+
+</mapper>

@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:tx="http://www.springframework.org/schema/tx" xmlns:aop="http://www.springframework.org/schema/aop"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+http://www.springframework.org/schema/beans/spring-beans.xsd
+http://www.springframework.org/schema/context
+http://www.springframework.org/schema/context/spring-context.xsd
+http://www.springframework.org/schema/tx
+http://www.springframework.org/schema/tx/spring-tx.xsd http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd">
+
+   <context:component-scan base-package="com.dhu.mapper">
+       <context:exclude-filter type="annotation" expression="org.springframework.stereotype.Controller"></context:exclude-filter>
+   </context:component-scan>
+
+
+
+    <bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource">
+        <property name="driverClass" value="com.mysql.cj.jdbc.Driver"/>
+        <property name="jdbcUrl" value="jdbc:mysql://localhost:3306/ssm?serverTimezone=UTC&amp;characterEncoding=utf-8"/>
+        <property name="user" value="louis"/>
+        <property name="password" value="123456"/>
+        <property name="maxPoolSize" value="30"></property>
+        <property name="minPoolSize" value="10"></property>
+        <property name="autoCommitOnClose" value="false"></property>
+        <property name="checkoutTimeout" value="100000"></property>
+        <property name="acquireRetryAttempts" value="2"></property>
+    </bean>
+
+    <bean id="sqlSessionFactoryBean" class="org.mybatis.spring.SqlSessionFactoryBean" >
+        <property name="dataSource" ref="dataSource"></property>
+        <property name="mapperLocations" value="classpath:com/dhu/mapper/**/*.xml"></property>
+
+        <property name="configuration">
+            <bean class="org.apache.ibatis.session.Configuration">
+                <property name="mapUnderscoreToCamelCase" value="true"></property>
+            </bean>
+        </property>
+
+        <property name="plugins">
+            <array>
+                <bean class="com.github.pagehelper.PageInterceptor">
+                    <property name="properties">
+                        <value>
+                            helperDialect=mysql
+                            reasonable=true
+                            supportMethodArugments=true
+                            params=count=countSql
+                            autoRuntimeDialect=true
+                        </value>
+                    </property>
+                </bean>
+            </array>
+        </property>
+    </bean>
+
+    <!--持久层接口-->
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="basePackage" value="com.dhu.mapper"></property>
+        <property name="sqlSessionFactoryBeanName" value="sqlSessionFactoryBean"></property>
+    </bean>
+
+    <!--事务功能-->
+    <bean id="transactionManager"
+          class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="dataSource"></property>
+    </bean>
+    <!--确定事务管理策略 指向向上的。。-->
+    <tx:advice transaction-manager="transactionManager" id="transactionAdvice">
+        <tx:attributes>
+            <tx:method name="select*" read-only="true"></tx:method>
+            <tx:method name="get*" read-only="true"></tx:method>
+            <tx:method name="query*" read-only="true"></tx:method>
+            <tx:method name="delete*" propagation="REQUIRED" rollback-for="Exception"></tx:method>
+            <tx:method name="update*" propagation="REQUIRED" rollback-for="Exception"></tx:method>
+            <tx:method name="insert*" propagation="REQUIRED" rollback-for="Exception"></tx:method>
+            <tx:method name="add*" propagation="REQUIRED" rollback-for="Exception"></tx:method>
+        </tx:attributes>
+    </tx:advice>
+
+
+    <!--使用aop对事务管理进行织入，明确1：那个地方需要事务管理 2 用什么策略管理-->
+    <aop:config>
+        <aop:pointcut id="txCut" expression="execution(* com.dhu.service..*.*(..))"></aop:pointcut>
+        <aop:advisor advice-ref="transactionAdvice" pointcut-ref="txCut"></aop:advisor>
+    </aop:config>
+
+    <!--使用注解进行事物配置 在service上加@Transanction-->
+    <tx:annotation-driven transaction-manager="transactionManager"></tx:annotation-driven>
+
+</beans>
